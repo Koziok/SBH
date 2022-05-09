@@ -1,0 +1,3 @@
+﻿  SBH.cpp
+D:\Git\SBH\SBH\SBH.cpp(49,23): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+  SBH.vcxproj -> D:\Git\SBH\Debug\SBH.exe
