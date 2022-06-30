@@ -57,22 +57,31 @@ def createGraph(oligo):
                 #print('Adding ', oligo[i], '--', cov, '-->', oligo[j])
     return adjMatrix
 
-def generateSolution(oligo, initNodeIndex, initNode, maxLen, spectOligos, weights, spectGraph):
+def generateSolution(oligo, initNodeIndex, initNode, maxLen, spectOligos, weights, spectGraph, probabilities):
     solution = []
     solution.append(initNode)
     currLen = len(initNode)
     currIndex = initNodeIndex
     length = 1
+    
     while(currLen < maxLen):
         choiceOligo = np.random.choice(oligo, p=weights[currIndex])
         choice = oligo.index(choiceOligo)
         choiceCost = spectGraph[currIndex][choice]
+        probabilities[currIndex][choice] /= 2
+        for i in range(0, len(oligo)):
+            weights[currIndex][i] = probabilities[currIndex][i]/sum(probabilities[currIndex])
+
+        #print(choiceOligo, choice, choiceCost, weights[currIndex][choice])
+        #print(weights[currIndex])
 
         currLen += (len(initNode) - choiceCost)
         if (currLen > maxLen):
             currLen -= (len(initNode) - choiceCost)
+            currIndex = choice
             return solution, length/spectOligos
         solution.append(oligo[choice])
+        currIndex = choice
         length += 1
     #print(solution)
     return solution, length/spectOligos
@@ -83,8 +92,9 @@ def generateSolutions(colonySize, oligo, initNodeIndex, initNode, maxLen, spectO
     for i in range(0, len(oligo)):
         for j in range(0, len(oligo)):
             weights[i][j] = probabilities[i][j]/sum(probabilities[i])
+    #print(weights)
     for i in range(0, colonySize):
-        solutions.append(generateSolution(oligo, initNodeIndex, initNode, maxLen, spectOligos, weights, spectGraph))
+        solutions.append(generateSolution(oligo, initNodeIndex, initNode, maxLen, spectOligos, weights, spectGraph, probabilities))
     return solutions
 
 def compareSolutions(solutions):
@@ -108,9 +118,9 @@ def pheromoneUpdate(topTen, pheromones, oligo, evaporationRate):
     return pheromones
 
 def antColony(spectGraph, oligo, initNodeIndex, initNode, maxLen, spectOligos):
-    generations = 100
-    colonySize = 100
-    evaporationRate = 0.25 #ile procent feromonów wyparuje po co iteracje
+    generations = 10
+    colonySize = 50
+    evaporationRate = 0.65 #ile procent feromonów wyparuje po co iteracje
     alpha = 1 #waga feromonów
     beta = 7 #waga pokrycia
     pheromones = [[0 for column in range(len(oligo))] for row in range(len(oligo))]
@@ -132,11 +142,10 @@ def antColony(spectGraph, oligo, initNodeIndex, initNode, maxLen, spectOligos):
                 if (pheromones[j][k] != 0):
                     probabilities[j][k] = pheromones[j][k]**alpha * spectGraph[j][k]**beta
                 else:
-                   probabilities[j][k] = 0.1**alpha * spectGraph[j][k]**beta
+                    probabilities[j][k] = 0.1**alpha * spectGraph[j][k]**beta
         #print(probabilities)
         i += 1
     return topTen
-    
 
 if __name__ == '__main__':
     k = 8
@@ -147,7 +156,7 @@ if __name__ == '__main__':
     oligo = portionDNA(sequence, k)
     spectOligos = len(oligo)
     initNode = oligo[0]
-    #oligo = addErrors(oligo, errors, k)
+    oligo = addErrors(oligo, errors, k)
     oligo.sort()
     oligo = list(dict.fromkeys(oligo))
     #print(initNode, oligo)
@@ -157,8 +166,9 @@ if __name__ == '__main__':
         if(oligo[i] == initNode):
             initNodeIndex = i
     #print(spectGraph)
-    #print(oligo)
+    
 
     topTen = antColony(spectGraph, oligo, initNodeIndex, initNode, len(sequence), spectOligos)
+    #print(oligo)
     print('Ostateczne wyniki: ')
-    print(topTen)
+    print(topTen[0])
