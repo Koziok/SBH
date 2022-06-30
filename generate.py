@@ -25,6 +25,6 @@ def save(sequence):
     f.close()
 
 if __name__ == '__main__':
-    n = 30
+    n = 500
     sequence = generate(n)
     save(sequence) 
